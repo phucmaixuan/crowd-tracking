@@ -6,6 +6,7 @@ import time
 
 from config import polygon, CONF_THRESHOLD
 from detection import model, detect
+from tracking import convert_to_bytetrack, tracker, update_tracks
 
 from utils import count_in_polygon, check_flow_crossing
 from loitering import check_loitering, loiter_dict
@@ -13,19 +14,9 @@ from loitering import check_loitering, loiter_dict
 def process_frame(frame, frame_id, loiter_dict, mode="loitering", dynamic_polygon=None, flow_dict=None, enter_count=0, exit_count=0):
     current_polygon = dynamic_polygon if dynamic_polygon is not None else polygon
     
-    # Run YOLO tracking
-    yolo_output = model.track(frame, persist=True, classes=[0, 1, 3], conf=CONF_THRESHOLD, verbose=False)
-
-    tracks = []
-    if yolo_output[0].boxes.id is not None:
-        boxes = yolo_output[0].boxes.xyxy.cpu().numpy()
-        ids = yolo_output[0].boxes.id.cpu().numpy().astype(int)
-        classes = yolo_output[0].boxes.cls.cpu().numpy().astype(int)  # Add class_ids
-        for i, box in enumerate(boxes):
-            x1, y1, x2, y2 = box
-            track_id = ids[i]
-            class_id = classes[i]
-            tracks.append([x1, y1, x2, y2, track_id, class_id])  # Add class_id to track
+    yolo_output = detect(model, frame, frame_id)
+    detections = convert_to_bytetrack(yolo_output, tracked_class_ids=(0,))
+    tracks = update_tracks(tracker, detections, frame.shape)
 
     # Draw polygon for debug and count
     count = 0
