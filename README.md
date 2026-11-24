@@ -21,6 +21,7 @@ Dự án này triển khai hệ thống giám sát thời gian thực sử dụn
 ```bash
 git clone https://github.com/your-username/crowd-tracking.git
 cd crowd-tracking
+git clone https://github.com/ifzhang/ByteTrack.git ByteTrack
 ```
 
 ### 2. Tạo Virtual Environment
